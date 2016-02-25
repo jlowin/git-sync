@@ -19,8 +19,8 @@ def sh(*args, **kwargs):
 @click.option('--run-once', '-1', envvar='GIT_SYNC_RUN_ONCE', is_flag=True, help="Run only once (don't loop) (default off; can also be set with envvar GIT_SYNC_RUN_ONCE).")
 def git_sync(repo, dest, branch, rev, wait, run_once):
     """
-    Periodically syncs a remote git repository to a local folder. The sync is
-    one-way; any local changes will be lost.
+    Periodically syncs a remote git repository to a local directory. The sync
+    is one-way; any local changes will be lost.
     """
     while True:
         sync_repo(repo, dest, branch, rev)
