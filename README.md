@@ -25,6 +25,7 @@ GIT_SYNC_REPO=repo.git GIT_SYNC_DEST=/dest/path python git-sync.py
 ```bash
 docker run -v /vol jlowin/git-sync repo.git --dest /vol --wait 100
 ```
+(This is a spectacularly useless example; you probably want to connect another container to the synced volume.)
 
 #### Kubernetes
 `git-sync` was originally designed as a side-car module that keeps a (shared) container volume in sync with a remote git repository.
