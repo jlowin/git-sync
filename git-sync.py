@@ -11,7 +11,7 @@ def sh(*args, **kwargs):
     return subprocess.check_output(*args, **kwargs).decode()
 
 @click.command()
-@click.option('--repo', '-r', envvar='GIT_SYNC_REPO', help='The git repo url to sync (can also be set with envvar GIT_SYNC_REPO).')
+@click.argument('repo', envvar='GIT_SYNC_REPO')
 @click.option('--dest', '-d', envvar='GIT_SYNC_DEST', default=os.getcwd(), help='The destination path (default current working directory; can also be set with envvar GIT_SYNC_DEST).')
 @click.option('--branch', '-b', envvar='GIT_SYNC_BRANCH', default='master', help='The branch to sync (default master; can also be set with envvar GIT_SYNC_BRANCH).')
 @click.option('--rev', '-r', envvar='GIT_SYNC_REV', default=None, help='The revision to sync (default HEAD; can also be set with envvar GIT_SYNC_REV).')
@@ -19,9 +19,12 @@ def sh(*args, **kwargs):
 @click.option('--run-once', '-1', envvar='GIT_SYNC_RUN_ONCE', is_flag=True, help="Run only once (don't loop) (default off; can also be set with envvar GIT_SYNC_RUN_ONCE).")
 def git_sync(repo, dest, branch, rev, wait, run_once):
     """
-    Periodically syncs a remote git repository to a local directory. The sync
+    Periodically syncs a remote git repository (REPO) to a local directory. The sync
     is one-way; any local changes will be lost.
+
+    The env var GIT_SYNC_REPO can be set to avoid passing arguments.
     """
+
     while True:
         sync_repo(repo, dest, branch, rev)
         if run_once:
