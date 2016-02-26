@@ -9,6 +9,7 @@ RUN pip install click
 
 # copy script
 COPY git-sync.py /git-sync.py
+RUN chmod +x /git-sync.py
 
 # run
-ENTRYPOINT ["python", "git-sync.py"]
+ENTRYPOINT ["./git-sync.py"]
