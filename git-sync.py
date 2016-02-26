@@ -17,6 +17,7 @@ sys.excepthook = (
     lambda exctype,exc,traceback : print("{}: {}".format(exctype.__name__,exc)))
 
 def sh(*args, **kwargs):
+    """ Get subprocess output"""
     return subprocess.check_output(*args, **kwargs).decode().strip()
 
 def setup_repo(repo, dest, branch):
