@@ -1,15 +1,20 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import click
 import os
 import shlex
 import subprocess
+import sys
 import time
 # try to be py2/3 compatible
 try:
      from urllib.parse import urlparse
 except ImportError:
      from urlparse import urlparse
+
+# hide tracebacks
+sys.excepthook = (
+    lambda exctype,exc,traceback : print("{}: {}".format(exctype.__name__,exc)))
 
 def sh(*args, **kwargs):
     return subprocess.check_output(*args, **kwargs).decode().strip()
