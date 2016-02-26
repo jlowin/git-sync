@@ -14,28 +14,6 @@ except ImportError:
 def sh(*args, **kwargs):
     return subprocess.check_output(*args, **kwargs).decode().strip()
 
-@click.command()
-@click.argument('repo', envvar='GIT_SYNC_REPO')
-@click.option('--dest', '-d', envvar='GIT_SYNC_DEST', default=os.getcwd(), help='The destination path (default current working directory; can also be set with envvar GIT_SYNC_DEST).')
-@click.option('--branch', '-b', envvar='GIT_SYNC_BRANCH', default='master', help='The branch to sync (default master; can also be set with envvar GIT_SYNC_BRANCH).')
-@click.option('--rev', '-r', envvar='GIT_SYNC_REV', default=None, help='The revision to sync (default HEAD; can also be set with envvar GIT_SYNC_REV).')
-@click.option('--wait', '-w', envvar='GIT_SYNC_WAIT', default=60, help='The number of seconds to pause after each sync (default 60; can also be set with envvar GIT_SYNC_WAIT)')
-@click.option('--run-once', '-1', envvar='GIT_SYNC_RUN_ONCE', is_flag=True, help="Run only once (don't loop) (default off; can also be set with envvar GIT_SYNC_RUN_ONCE).")
-def git_sync(repo, dest, branch, rev, wait, run_once):
-    """
-    Periodically syncs a remote git repository (REPO) to a local directory. The sync
-    is one-way; any local changes will be lost.
-
-    The env var GIT_SYNC_REPO can be set to avoid passing arguments.
-    """
-    setup_repo(repo, dest, branch)
-    while True:
-        sync_repo(repo, dest, branch, rev)
-        if run_once:
-            break
-        click.echo('Waiting {wait} seconds...'.format(**locals()))
-        time.sleep(wait)
-
 def setup_repo(repo, dest, branch):
     """
     Clones `branch` of remote `repo` to `dest`, if it doesn't exist already.
@@ -96,6 +74,28 @@ def sync_repo(repo, dest, branch, rev):
     sh(['chmod', '-R', '744', dest])
 
     click.echo('Finished syncing {repo}:{branch}'.format(**locals()))
+
+@click.command()
+@click.argument('repo', envvar='GIT_SYNC_REPO')
+@click.option('--dest', '-d', envvar='GIT_SYNC_DEST', default=os.getcwd(), help='The destination path (default current working directory; can also be set with envvar GIT_SYNC_DEST).')
+@click.option('--branch', '-b', envvar='GIT_SYNC_BRANCH', default='master', help='The branch to sync (default master; can also be set with envvar GIT_SYNC_BRANCH).')
+@click.option('--rev', '-r', envvar='GIT_SYNC_REV', default=None, help='The revision to sync (default HEAD; can also be set with envvar GIT_SYNC_REV).')
+@click.option('--wait', '-w', envvar='GIT_SYNC_WAIT', default=60, help='The number of seconds to pause after each sync (default 60; can also be set with envvar GIT_SYNC_WAIT)')
+@click.option('--run-once', '-1', envvar='GIT_SYNC_RUN_ONCE', is_flag=True, help="Run only once (don't loop) (default off; can also be set with envvar GIT_SYNC_RUN_ONCE).")
+def git_sync(repo, dest, branch, rev, wait, run_once):
+    """
+    Periodically syncs a remote git repository (REPO) to a local directory. The sync
+    is one-way; any local changes will be lost.
+
+    The env var GIT_SYNC_REPO can be set to avoid passing arguments.
+    """
+    setup_repo(repo, dest, branch)
+    while True:
+        sync_repo(repo, dest, branch, rev)
+        if run_once:
+            break
+        click.echo('Waiting {wait} seconds...'.format(**locals()))
+        time.sleep(wait)
 
 if __name__ == '__main__':
     git_sync()
