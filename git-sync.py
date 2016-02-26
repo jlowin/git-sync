@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+
 """
-Based on the Kubernetes git-sync sidecar module:
+Inspired by the Kubernetes git-sync sidecar module:
 https://github.com/kubernetes/contrib/tree/master/git-sync
 """
+
 import click
 import os
 import subprocess
