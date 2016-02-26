@@ -42,18 +42,18 @@ def sync_repo(repo, dest, branch, rev):
     if not os.path.exists(os.path.join(dest, '.git')):
         output = sh(
             ['git', 'clone', '--no-checkout', '-b', branch, repo, dest])
-        click.echo('Clone {repo}: {output}'.format(**locals()))
+        click.echo('Cloned {repo}: {output}'.format(**locals()))
 
     # fetch branch
     output = sh(['git', 'fetch', 'origin', branch], cwd=dest)
-    click.echo('Fetch {branch}: {output}'.format(**locals()))
+    click.echo('Fetched {branch}: {output}'.format(**locals()))
 
     # reset working copy
     if not rev:
         output = sh(['git', 'reset', '--hard', 'origin/' + branch], cwd=dest)
     else:
         output = sh(['git', 'reset', '--hard', rev], cwd=dest)
-    click.echo('Reset {rev}: {output}'.format(**locals()))
+    click.echo('Reset to {rev}: {output}'.format(**locals()))
 
     # set file permissions
     sh(['chmod', '-R', '744', dest])
