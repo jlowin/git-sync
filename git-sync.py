@@ -11,7 +11,7 @@ import subprocess
 import time
 
 def sh(*args, **kwargs):
-    return subprocess.check_output(*args, **kwargs).decode()
+    return subprocess.check_output(*args, **kwargs).decode().strip()
 
 @click.command()
 @click.argument('repo', envvar='GIT_SYNC_REPO')
