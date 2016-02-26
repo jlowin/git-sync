@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-"""
-Inspired by the Kubernetes git-sync sidecar module:
-https://github.com/kubernetes/contrib/tree/master/git-sync
-"""
-
 import click
 import os
+import shlex
 import subprocess
 import time
+# try to be py2/3 compatible
+try:
+     from urllib.parse import urlparse
+except ImportError:
+     from urlparse import urlparse
 
 def sh(*args, **kwargs):
     return subprocess.check_output(*args, **kwargs).decode().strip()
@@ -27,7 +28,7 @@ def git_sync(repo, dest, branch, rev, wait, run_once):
 
     The env var GIT_SYNC_REPO can be set to avoid passing arguments.
     """
-
+    setup_repo(repo, dest, branch)
     while True:
         sync_repo(repo, dest, branch, rev)
         if run_once:
@@ -35,15 +36,51 @@ def git_sync(repo, dest, branch, rev, wait, run_once):
         click.echo('Waiting {wait} seconds...'.format(**locals()))
         time.sleep(wait)
 
-def sync_repo(repo, dest, branch, rev):
+def setup_repo(repo, dest, branch):
+    """
+    Clones `branch` of remote `repo` to `dest`, if it doesn't exist already.
+    Raises an error if a different repo or branch is found.
+    """
     dest = os.path.expanduser(dest)
 
-    # clone repo
+    # if no git repo exists at dest, clone the requested repo
     if not os.path.exists(os.path.join(dest, '.git')):
         output = sh(
             ['git', 'clone', '--no-checkout', '-b', branch, repo, dest])
         click.echo('Cloned {repo}: {output}'.format(**locals()))
 
+    else:
+        # if there is a repo, make sure it's the right one
+        current_remote = sh([
+                'bash',
+                '-c',
+                'git remote show -n origin | grep Fetch | cut -d: -f2-'],
+            cwd=dest).lower()
+        parsed_remote = urlparse(current_remote)
+        repo = repo.lower()
+        if not repo.endswith('.git'):
+            repo = repo + '.git'
+        parsed_repo = urlparse(repo)
+        if (    parsed_repo.netloc != parsed_remote.netloc
+                or parsed_repo.path != parsed_remote.path):
+            raise ValueError(
+                'Destination already has a remote repo '
+                'cloned: {current_remote}'.format(**locals()))
+
+        # and check that the branches match as well
+        current_branch = sh(
+            shlex.split('git rev-parse --abbrev-ref HEAD'),
+            cwd=dest)
+        if branch.lower() != current_branch.lower():
+            raise ValueError(
+                'Destination is on branch {current_branch}; '
+                'requested {branch}'.format(**locals()))
+
+def sync_repo(repo, dest, branch, rev):
+    """
+    Syncs `branch` of remote `repo` (at `rev`) to `dest`.
+    Assumes `dest` has already been cloned.
+    """
     # fetch branch
     output = sh(['git', 'fetch', 'origin', branch], cwd=dest)
     click.echo('Fetched {branch}: {output}'.format(**locals()))
