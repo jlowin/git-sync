@@ -79,7 +79,7 @@ def setup_repo(repo, dest, branch):
             raise ValueError(
                 'There are uncommitted changes at {dest} that syncing '
                 'would overwrite'.format(**locals()))
-        if ahead_status:
+        if '[ahead ' in ahead_status:
             raise ValueError(
                 'This branch is ahead of the requested repo and syncing would '
                 'overwrite the changes: {ahead_status}'.format(**locals()))
