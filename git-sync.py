@@ -71,11 +71,18 @@ def setup_repo(repo, dest, branch):
                 'already on branch `{current_branch}`'.format(**locals()))
 
         # and check that we aren't going to overwrite any changes!
-        status = sh(shlex.split('git status -s'), cwd=dest)
-        if status:
+        # modified_status: uncommited modifications
+        # ahead_status: commited but not pushed
+        modified_status = sh(shlex.split('git status -s'), cwd=dest)
+        ahead_status = sh(shlex.split('git status -sb'), cwd=dest)[3:]
+        if modified_status:
             raise ValueError(
                 'There are uncommitted changes at {dest} that syncing '
-                'would overwrite '.format(**locals()))
+                'would overwrite'.format(**locals()))
+        if ahead_status:
+            raise ValueError(
+                'This branch is ahead of the requested repo and syncing would '
+                'overwrite the changes: {ahead_status}'.format(**locals()))
 
 
 def sync_repo(repo, dest, branch, rev):
