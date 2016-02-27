@@ -22,10 +22,17 @@ def get_repo_at(dest):
                 'bash',
                 '-c',
                 'git remote show -n origin | grep Fetch | cut -d: -f2-'],
-            cwd=dest).lower()
+            cwd=dest)
+        if not current_remote:
+            raise ValueError
     except:
         raise ValueError('No repo found at {dest}'.format(**locals()))
-    return current_remote
+
+    current_branch = sh(
+            shlex.split('git rev-parse --abbrev-ref HEAD'),
+            cwd=dest)
+
+    return current_remote.lower(), current_branch.lower()
 
 def setup_repo(repo, dest, branch):
     """
@@ -42,26 +49,34 @@ def setup_repo(repo, dest, branch):
 
     else:
         # if there is a repo, make sure it's the right one
-        current_remote = get_repo_at(dest)
-        parsed_remote = urlparse(current_remote)
+        current_remote, current_branch = get_repo_at(dest)
         repo = repo.lower()
-        if repo.endswith('.git'):
-            repo = repo[:-4]
+        if not repo.endswith('.git'):
+            repo += '.git'
+        if not current_remote.endswith('.git'):
+            current_remote += '.git'
+        parsed_remote = urlparse(current_remote)
         parsed_repo = urlparse(repo)
+
         if (    parsed_repo.netloc != parsed_remote.netloc
                 or parsed_repo.path != parsed_remote.path):
             raise ValueError(
-                'Destination already has a remote repo '
-                'cloned: {current_remote}'.format(**locals()))
+                'Requested repo `{repo}` but destination already '
+                'has a remote repo cloned: {current_remote}'.format(**locals()))
 
         # and check that the branches match as well
-        current_branch = sh(
-            shlex.split('git rev-parse --abbrev-ref HEAD'),
-            cwd=dest)
-        if branch.lower() != current_branch.lower():
+        if branch.lower() != current_branch:
             raise ValueError(
-                'Destination is on branch {current_branch}; '
-                'requested {branch}'.format(**locals()))
+                'Requested branch `{branch}` but destination is '
+                'already on branch `{current_branch}`'.format(**locals()))
+
+        # and check that we aren't going to overwrite any changes!
+        status = sh(shlex.split('git status -s'), cwd=dest)
+        if status:
+            raise ValueError(
+                'There are uncommitted changes at {dest} that syncing '
+                'would overwrite '.format(**locals()))
+
 
 def sync_repo(repo, dest, branch, rev):
     """
@@ -85,28 +100,31 @@ def sync_repo(repo, dest, branch, rev):
     click.echo('Finished syncing {repo}:{branch}'.format(**locals()))
 
 @click.command()
-# @click.argument('repo', envvar='GIT_SYNC_REPO')
-@click.option('--repo', '-r', envvar='GIT_SYNC_REPO', default='', help='The url of the remote repo to sync (defaults to inferring from the current working directory; can also be set with envvar GIT_SYNC_REPO).')
-@click.option('--dest', '-d', envvar='GIT_SYNC_DEST', default=os.getcwd(), help='The destination path (default current working directory; can also be set with envvar GIT_SYNC_DEST).')
-@click.option('--branch', '-b', envvar='GIT_SYNC_BRANCH', default='master', help='The branch to sync (default master; can also be set with envvar GIT_SYNC_BRANCH).')
-@click.option('--rev', envvar='GIT_SYNC_REV', default=None, help='The revision to sync (default HEAD; can also be set with envvar GIT_SYNC_REV).')
-@click.option('--wait', '-w', envvar='GIT_SYNC_WAIT', default=60, help='The number of seconds to pause after each sync (default 60; can also be set with envvar GIT_SYNC_WAIT)')
-@click.option('--run-once', '-1', envvar='GIT_SYNC_RUN_ONCE', is_flag=True, help="Run only once (don't loop) (default off; can also be set with envvar GIT_SYNC_RUN_ONCE).")
-def git_sync(repo, dest, branch, rev, wait, run_once):
+@click.option('--dest', '-d', envvar='GIT_SYNC_DEST', default=os.getcwd(), help='The destination path. Defaults to the current working directory; can also be set with envvar GIT_SYNC_DEST.')
+@click.option('--repo', '-r', envvar='GIT_SYNC_REPO', default='', help='The url of the remote repo to sync. Defaults to inferring from `dest`; can also be set with envvar GIT_SYNC_REPO.')
+@click.option('--branch', '-b', envvar='GIT_SYNC_BRANCH', default='', help='The branch to sync. Defaults to inferring from `repo` (if already cloned), otherwise defaults to master; can also be set with envvar GIT_SYNC_BRANCH.')
+@click.option('--wait', '-w', envvar='GIT_SYNC_WAIT', default=60, help='The number of seconds to pause after each sync. Defaults to 60; can also be set with envvar GIT_SYNC_WAIT.')
+@click.option('--run-once', '-1', envvar='GIT_SYNC_RUN_ONCE', is_flag=True, help="Run only once (don't loop). Defaults to off; can also be set with envvar GIT_SYNC_RUN_ONCE=true.")
+@click.option('--rev', envvar='GIT_SYNC_REV', default=None, help='The revision to sync. Defaults to HEAD; can also be set with envvar GIT_SYNC_REV.')
 @click.option('--debug', envvar='GIT_SYNC_DEBUG', is_flag=True, help='Print tracebacks on error.')
+def git_sync(repo, dest, branch, rev, wait, run_once, debug):
     """
-    Periodically syncs a remote git repository (REPO) to a local directory. The sync
+    Periodically syncs a remote git repository to a local directory. The sync
     is one-way; any local changes will be lost.
-
-    The env var GIT_SYNC_REPO can be set to avoid passing arguments.
     """
 
     if not debug:
         sys.excepthook = (
             lambda etype, e, tb : print("{}: {}".format(etype.__name__, e)))
 
-    if not repo:
-        repo = get_repo_at(dest)
+    # infer repo/branch
+    if not repo and not branch:
+        repo, branch = get_repo_at(dest)
+    elif not repo:
+        repo, _ = get_repo_at(dest)
+    elif not branch:
+        branch = 'master'
+
     setup_repo(repo, dest, branch)
     while True:
         sync_repo(repo, dest, branch, rev)
