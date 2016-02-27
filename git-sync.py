@@ -12,10 +12,6 @@ try:
 except ImportError:
      from urlparse import urlparse
 
-# hide tracebacks
-sys.excepthook = (
-    lambda exctype,exc,traceback : print("{}: {}".format(exctype.__name__,exc)))
-
 def sh(*args, **kwargs):
     """ Get subprocess output"""
     return subprocess.check_output(*args, **kwargs).decode().strip()
@@ -97,12 +93,18 @@ def sync_repo(repo, dest, branch, rev):
 @click.option('--wait', '-w', envvar='GIT_SYNC_WAIT', default=60, help='The number of seconds to pause after each sync (default 60; can also be set with envvar GIT_SYNC_WAIT)')
 @click.option('--run-once', '-1', envvar='GIT_SYNC_RUN_ONCE', is_flag=True, help="Run only once (don't loop) (default off; can also be set with envvar GIT_SYNC_RUN_ONCE).")
 def git_sync(repo, dest, branch, rev, wait, run_once):
+@click.option('--debug', envvar='GIT_SYNC_DEBUG', is_flag=True, help='Print tracebacks on error.')
     """
     Periodically syncs a remote git repository (REPO) to a local directory. The sync
     is one-way; any local changes will be lost.
 
     The env var GIT_SYNC_REPO can be set to avoid passing arguments.
     """
+
+    if not debug:
+        sys.excepthook = (
+            lambda etype, e, tb : print("{}: {}".format(etype.__name__, e)))
+
     if not repo:
         repo = get_repo_at(dest)
     setup_repo(repo, dest, branch)
