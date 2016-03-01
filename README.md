@@ -28,6 +28,7 @@ GIT_SYNC_REPO=repo.git GIT_SYNC_DEST=/dest/path ./git-sync.py
 ```
 
 #### Docker
+By default, the docker container syncs to an internal directory `/git`.
 ```bash
 docker run -v /vol jlowin/git-sync repo.git --dest /vol --wait 100
 ```
