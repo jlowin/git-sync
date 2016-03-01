@@ -48,7 +48,7 @@ def setup_repo(repo, dest, branch):
     if not os.path.exists(os.path.join(dest, '.git')):
         output = sh(
             ['git', 'clone', '--no-checkout', '-b', branch, repo, dest])
-        click.echo('Cloned {repo_name}: {output}'.format(**locals()))
+        click.echo('Cloned {repo_name}'.format(**locals()))
 
     else:
         # if there is a repo, make sure it's the right one
