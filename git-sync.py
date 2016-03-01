@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from __future__ import print_function
 import click
 import os
@@ -41,11 +42,13 @@ def setup_repo(repo, dest, branch):
     """
     dest = os.path.expanduser(dest)
 
+    repo_name = urlparse(repo).path
+
     # if no git repo exists at dest, clone the requested repo
     if not os.path.exists(os.path.join(dest, '.git')):
         output = sh(
             ['git', 'clone', '--no-checkout', '-b', branch, repo, dest])
-        click.echo('Cloned {repo}: {output}'.format(**locals()))
+        click.echo('Cloned {repo_name}: {output}'.format(**locals()))
 
     else:
         # if there is a repo, make sure it's the right one
@@ -61,7 +64,7 @@ def setup_repo(repo, dest, branch):
         if (    parsed_repo.netloc != parsed_remote.netloc
                 or parsed_repo.path != parsed_remote.path):
             raise ValueError(
-                'Requested repo `{repo}` but destination already '
+                'Requested repo `...{repo_name}` but destination already '
                 'has a remote repo cloned: {current_remote}'.format(**locals()))
 
         # and check that the branches match as well
@@ -104,7 +107,8 @@ def sync_repo(repo, dest, branch, rev):
     # set file permissions
     sh(['chmod', '-R', '744', dest])
 
-    click.echo('Finished syncing {repo}:{branch}'.format(**locals()))
+    repo_name = urlparse(repo).path
+    click.echo('Finished syncing {repo_name}:{branch}'.format(**locals()))
 
 @click.command()
 @click.option('--dest', '-d', envvar='GIT_SYNC_DEST', default=os.getcwd(), help='The destination path. Defaults to the current working directory; can also be set with envvar GIT_SYNC_DEST.')
