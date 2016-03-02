@@ -102,6 +102,10 @@ def sync_repo(repo, dest, branch, rev):
         output = sh(['git', 'reset', '--hard', 'origin/' + branch], cwd=dest)
     else:
         output = sh(['git', 'reset', '--hard', rev], cwd=dest)
+
+    # clean untracked files
+    sh(['git', 'clean', '-dfqx'], cwd=dest)
+
     click.echo('Reset to {rev}: {output}'.format(**locals()))
 
     # set file permissions
