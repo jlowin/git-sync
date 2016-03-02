@@ -105,7 +105,7 @@ def sync_repo(repo, dest, branch, rev):
         output = sh(['git', 'reset', '--hard', rev], cwd=dest)
 
     # clean untracked files
-    sh(['git', 'clean', '-dfqx'], cwd=dest)
+    sh(['git', 'clean', '-dfq'], cwd=dest)
 
     click.echo('Reset to {rev}: {output}'.format(**locals()))
 
