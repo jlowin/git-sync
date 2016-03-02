@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 import click
+import datetime
 import os
 import shlex
 import subprocess
@@ -112,7 +113,9 @@ def sync_repo(repo, dest, branch, rev):
     sh(['chmod', '-R', '744', dest])
 
     repo_name = urlparse(repo).path
-    click.echo('Finished syncing {repo_name}:{branch}'.format(**locals()))
+    click.echo(
+        'Finished syncing {repo_name}:{branch} at {t:%Y-%m-%d %H:%M:%S}'.format(
+            **locals(), t=datetime.datetime.now()))
 
 @click.command()
 @click.option('--dest', '-d', envvar='GIT_SYNC_DEST', default=os.getcwd(), help='The destination path. Defaults to the current working directory; can also be set with envvar GIT_SYNC_DEST.')
