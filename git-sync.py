@@ -105,9 +105,6 @@ def sync_repo(repo, dest, branch, rev):
 
     click.echo('Reset to {rev}: {output}'.format(**locals()))
 
-    # set file permissions
-    sh(['chmod', '-R', '744', dest])
-
     repo_name = urlparse(repo).path
     click.echo(
         'Finished syncing {repo_name}:{branch} at {t:%Y-%m-%d %H:%M:%S}'.format(
