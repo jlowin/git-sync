@@ -19,16 +19,12 @@ def sh(*args, **kwargs):
     return subprocess.check_output(*args, **kwargs).decode().strip()
 
 def get_repo_at(dest):
-    try:
-        current_remote = sh([
-                'bash',
-                '-c',
-                'git remote show -n origin | grep Fetch | cut -d: -f2-'],
-            cwd=dest)
-        if not current_remote:
-            raise ValueError
-    except:
-        raise ValueError('No repo found at {dest}'.format(**locals()))
+    if not os.path.exists(os.path.join(dest, '.git')):
+        raise ValueError('No repo found at {dest}'.format(**locals))
+
+    current_remote = sh(
+        shlex.split('git config --get remote.origin.url'),
+        cwd=dest)
 
     current_branch = sh(
             shlex.split('git rev-parse --abbrev-ref HEAD'),
