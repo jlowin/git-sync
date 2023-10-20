@@ -20,7 +20,7 @@ def sh(*args, **kwargs):
 
 def get_repo_at(dest):
     if not os.path.exists(os.path.join(dest, '.git')):
-        raise ValueError('No repo found at {dest}'.format(**locals))
+        raise ValueError('No repo found at {dest}'.format(**locals()))
 
     current_remote = sh(
         shlex.split('git config --get remote.origin.url'),
